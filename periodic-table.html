@@ -196,20 +196,32 @@
             margin: 10px 0;
         }
 
-        /* Name */
         .card-name {
             font-size: 13px;
             font-weight: bold;
             text-align: center;
             width: 100%;
+            line-height: 16px;
+
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+
+            overflow-wrap: anywhere;
+            min-height: 32px;
         }
 
-        /* Interest */
         .card-interest {
             font-size: 11px;
             margin-top: 5px;
             text-align: center;
             opacity: 0.8;
+            width: 100%;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         #logout {
