@@ -4,45 +4,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Login Demo</title>
+    <title>Google Login & Sheets Demo</title>
 
-    <script src="https://accounts.google.com/gsi/client"
-            async defer></script>
+    <script src="https://accounts.google.com/gsi/client" defer></script>
 
     <style>
         body {
             font-family: Arial, sans-serif;
             background: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             margin: 0;
+            padding: 40px 20px;
         }
 
         .container {
             background: white;
-            padding: 40px;
+            max-width: 850px;
+            margin: auto;
+            padding: 30px;
             border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.1);
+        }
+
+        h1, h2 {
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 320px;
+        }
+
+        .center {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 11px 20px;
+            margin: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #4285f4;
+            color: white;
+            font-size: 14px;
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
         }
 
         #user-info {
             display: none;
-            margin-top: 25px;
+            text-align: center;
+            margin: 25px 0;
         }
 
-        #user-info img {
-            width: 80px;
+        #user-picture {
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
         }
 
-        button.logout {
-            padding: 10px 20px;
-            margin-top: 15px;
-            cursor: pointer;
+        #sheet-section {
+            display: none;
+            margin-top: 35px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        th {
+            background: #4285f4;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+
+        #status {
+            text-align: center;
+            margin: 15px;
+            color: #555;
+        }
+
+        #error {
+            color: #c62828;
+            text-align: center;
+            white-space: pre-wrap;
         }
     </style>
 </head>
@@ -50,26 +110,60 @@
 <body>
 
 <div class="container">
-    <h1>Welcome</h1>
-    <p>Google Login Demo</p>
 
-    <div id="google-button"></div>
+    <h1>Welcome</h1>
+    <p class="center">Google Login & Sheets Demo</p>
+
+    <div class="center" id="google-button"></div>
 
     <div id="user-info">
-        <img id="user-picture" src="" alt="Profile picture">
+        <img id="user-picture" alt="Profile picture">
         <h3 id="user-name"></h3>
         <p id="user-email"></p>
-        <button class="logout" onclick="logout()">
-            Sign Out
-        </button>
+        <button onclick="loadSheet()">Load Google Sheet</button>
+        <button onclick="logout()">Sign Out</button>
     </div>
+
+    <div id="sheet-section">
+        <h2>Google Sheets Data</h2>
+        <p class="center">Spreadsheet: Sheet1</p>
+
+        <p id="status"></p>
+        <p id="error"></p>
+
+        <div class="table-wrapper">
+            <table id="sheet-table"></table>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // Replace with your Google OAuth Client ID
-    const CLIENT_ID = "832112878235-dvsre9mk57u3dul7mot1te8amblctsbs.apps.googleusercontent.com";
+    // Google OAuth Client ID
+    const CLIENT_ID =
+        "832112878235-dvsre9mk57u3dul7mot1te8amblctsbs.apps.googleusercontent.com";
 
-    window.onload = function () {
+    // Google Spreadsheet configuration
+    const SPREADSHEET_ID =
+        "1JC0FqpqJjYZDhkjw96Z4W2Ahm-2vT8HtNdSFcqfqa3U";
+
+    const RANGE = "Sheet1!A:Z";
+
+    const SHEETS_SCOPE =
+        "https://www.googleapis.com/auth/spreadsheets.readonly";
+
+    let tokenClient;
+    let accessToken = null;
+    let userLoggedIn = false;
+
+    window.addEventListener("load", function () {
+
+        if (!window.google) {
+            showError("Google services failed to load.");
+            return;
+        }
+
+        // Google Login
         google.accounts.id.initialize({
             client_id: CLIENT_ID,
             callback: handleCredentialResponse
@@ -80,15 +174,33 @@
             {
                 theme: "outline",
                 size: "large",
-                text: "signin_with",
-                shape: "rectangular"
+                text: "signin_with"
             }
         );
-    };
 
+        // Google Sheets API authorization
+        tokenClient =
+            google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SHEETS_SCOPE,
+
+                callback: async function (response) {
+
+                    if (response.error) {
+                        showError(response.error);
+                        return;
+                    }
+
+                    accessToken = response.access_token;
+
+                    await fetchSheetData();
+                }
+            });
+    });
+
+    // Handle Google Login
     function handleCredentialResponse(response) {
-        // Decode the JWT payload for this frontend demo.
-        // This does NOT verify the token's authenticity.
+
         const payload = response.credential.split(".")[1];
 
         const base64 = payload
@@ -103,6 +215,8 @@
         const user = JSON.parse(
             new TextDecoder().decode(bytes)
         );
+
+        userLoggedIn = true;
 
         document.getElementById("user-name").textContent =
             user.name;
@@ -120,15 +234,150 @@
             "block";
     }
 
+    // Request permission to read Google Sheets
+    function loadSheet() {
+
+        if (!userLoggedIn) {
+            showError("Please sign in first.");
+            return;
+        }
+
+        clearError();
+
+        document.getElementById("status").textContent =
+            "Requesting Google Sheets permission...";
+
+        tokenClient.requestAccessToken();
+    }
+
+    // Fetch data from Google Sheets API
+    async function fetchSheetData() {
+
+        const url =
+            "https://sheets.googleapis.com/v4/spreadsheets/" +
+            encodeURIComponent(SPREADSHEET_ID) +
+            "/values/" +
+            encodeURIComponent(RANGE);
+
+        try {
+
+            document.getElementById("status").textContent =
+                "Loading data...";
+
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: "Bearer " + accessToken
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error?.message || "Unable to read spreadsheet."
+                );
+            }
+
+            displayTable(result.values || []);
+
+        } catch (err) {
+
+            showError(err.message);
+
+        }
+    }
+
+    // Display spreadsheet data
+    function displayTable(rows) {
+
+        const table = document.getElementById("sheet-table");
+
+        table.innerHTML = "";
+
+        if (!rows.length) {
+            document.getElementById("status").textContent =
+                "No data found.";
+            return;
+        }
+
+        // First row becomes table header
+        const headerRow = document.createElement("tr");
+
+        rows[0].forEach(value => {
+
+            const th = document.createElement("th");
+
+            th.textContent = value;
+
+            headerRow.appendChild(th);
+
+        });
+
+        table.appendChild(headerRow);
+
+        // Remaining rows become table data
+        rows.slice(1).forEach(row => {
+
+            const tr = document.createElement("tr");
+
+            for (let i = 0; i < rows[0].length; i++) {
+
+                const td = document.createElement("td");
+
+                td.textContent = row[i] ?? "";
+
+                tr.appendChild(td);
+
+            }
+
+            table.appendChild(tr);
+
+        });
+
+        document.getElementById("sheet-section").style.display =
+            "block";
+
+        document.getElementById("status").textContent =
+            "Successfully loaded " + (rows.length - 1) + " data rows.";
+
+        clearError();
+    }
+
+    function showError(message) {
+        document.getElementById("error").textContent =
+            "Error: " + message;
+
+        document.getElementById("status").textContent = "";
+    }
+
+    function clearError() {
+        document.getElementById("error").textContent = "";
+    }
+
+    // Sign out of the demo UI
     function logout() {
-        google.accounts.id.disableAutoSelect();
+
+        accessToken = null;
+        userLoggedIn = false;
 
         document.getElementById("user-info").style.display =
             "none";
 
         document.getElementById("google-button").style.display =
             "block";
+
+        document.getElementById("sheet-section").style.display =
+            "none";
+
+        document.getElementById("sheet-table").innerHTML = "";
+
+        clearError();
+
+        document.getElementById("status").textContent = "";
+
+        google.accounts.id.disableAutoSelect();
     }
+
 </script>
 
 </body>
