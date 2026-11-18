@@ -5,12 +5,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Login Demo</title>
+
+    <script src="https://accounts.google.com/gsi/client"
+            async defer></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 320px;
+        }
+
+        #user-info {
+            display: none;
+            margin-top: 25px;
+        }
+
+        #user-info img {
+            width: 80px;
+            border-radius: 50%;
+        }
+
+        button.logout {
+            padding: 10px 20px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+    </style>
 </head>
+
 <body>
+
+<div class="container">
     <h1>Welcome</h1>
     <p>Google Login Demo</p>
-    <button onclick="alert('Google Login will be configured next!')">
-        Sign in with Google
-    </button>
+
+    <div id="google-button"></div>
+
+    <div id="user-info">
+        <img id="user-picture" src="" alt="Profile picture">
+        <h3 id="user-name"></h3>
+        <p id="user-email"></p>
+        <button class="logout" onclick="logout()">
+            Sign Out
+        </button>
+    </div>
+</div>
+
+<script>
+    // Replace with your Google OAuth Client ID
+    const CLIENT_ID = "832112878235-dvsre9mk57u3dul7mot1te8amblctsbs.apps.googleusercontent.com";
+
+    window.onload = function () {
+        google.accounts.id.initialize({
+            client_id: CLIENT_ID,
+            callback: handleCredentialResponse
+        });
+
+        google.accounts.id.renderButton(
+            document.getElementById("google-button"),
+            {
+                theme: "outline",
+                size: "large",
+                text: "signin_with",
+                shape: "rectangular"
+            }
+        );
+    };
+
+    function handleCredentialResponse(response) {
+        // Decode the JWT payload for this frontend demo.
+        // This does NOT verify the token's authenticity.
+        const payload = response.credential.split(".")[1];
+
+        const base64 = payload
+            .replace(/-/g, "+")
+            .replace(/_/g, "/");
+
+        const bytes = Uint8Array.from(
+            atob(base64),
+            c => c.charCodeAt(0)
+        );
+
+        const user = JSON.parse(
+            new TextDecoder().decode(bytes)
+        );
+
+        document.getElementById("user-name").textContent =
+            user.name;
+
+        document.getElementById("user-email").textContent =
+            user.email;
+
+        document.getElementById("user-picture").src =
+            user.picture;
+
+        document.getElementById("google-button").style.display =
+            "none";
+
+        document.getElementById("user-info").style.display =
+            "block";
+    }
+
+    function logout() {
+        google.accounts.id.disableAutoSelect();
+
+        document.getElementById("user-info").style.display =
+            "none";
+
+        document.getElementById("google-button").style.display =
+            "block";
+    }
+</script>
+
 </body>
 </html>
