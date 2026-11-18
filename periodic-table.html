@@ -130,6 +130,60 @@
             text-shadow: 0 0 6px black;
             overflow-wrap: anywhere;
         }
+        .person-card {
+            width: 150px;
+            height: 210px;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .person-card.red {
+            background: #d94a4a;
+        }
+
+        .person-card.orange {
+            background: #e99132;
+        }
+
+        .person-card.green {
+            background: #16834b;
+        }
+
+        .card-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .card-photo {
+            width: 105px;
+            height: 105px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .card-name {
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+        }
+
+        .card-interest {
+            font-size: 11px;
+            margin-top: 5px;
+            text-align: center;
+        }
     </style>
 
     <script type="importmap">
@@ -302,12 +356,15 @@
       
               const rows = await loadGoogleSheet(accessToken);
               const people = rows
-                  .filter(row => row[0] || row[1] || row[2])
-                  .map(row => ({
-                      photo: row[1] || '',
-                      name: row[0] || 'No Name',
-                      interest: row[2] || ''
-                  }));
+                .filter(row => row.some(value => value !== ''))
+                .map(row => ({
+                    name: row[0] || 'No Name',
+                    photo: row[1] || '',
+                    age: row[2] || '',
+                    country: row[3] || '',
+                    interest: row[4] || '',
+                    netWorth: row[5] || ''
+                }));
       
               if (people.length === 0) {
                   throw new Error('No data found in Google Sheet');
@@ -390,7 +447,7 @@
             for (let i = 0; i < people.length; i++) {
 
                 const person = people[i];
-
+/*
                 const element =
                     document.createElement('div');
 
@@ -455,7 +512,64 @@
                 interest.textContent = person.interest;
 
                 element.appendChild(interest);
+*/
 
+                const element = document.createElement('div');
+
+                // Determine background using Net Worth
+                const netWorthValue = Number(
+                    String(person.netWorth).replace(/[$,]/g, '')
+                );
+
+                let worthClass = 'red';
+
+                if (netWorthValue > 200000) {
+                    worthClass = 'green';
+                } else if (netWorthValue >= 100000) {
+                    worthClass = 'orange';
+                }
+
+                element.className = `person-card ${worthClass}`;
+
+                // Top section: Country and Age
+                const header = document.createElement('div');
+                header.className = 'card-header';
+
+                const country = document.createElement('span');
+                country.textContent = person.country;
+
+                const age = document.createElement('span');
+                age.textContent = person.age;
+
+                header.appendChild(country);
+                header.appendChild(age);
+
+                // Center: Photo
+                const photo = document.createElement('img');
+                photo.className = 'card-photo';
+                photo.src = person.photo;
+                photo.alt = person.name;
+                photo.referrerPolicy = 'no-referrer';
+
+                photo.onerror = () => {
+                    photo.style.visibility = 'hidden';
+                };
+
+                // Bottom: Name
+                const name = document.createElement('div');
+                name.className = 'card-name';
+                name.textContent = person.name;
+
+                // Bottom: Interest
+                const interest = document.createElement('div');
+                interest.className = 'card-interest';
+                interest.textContent = person.interest;
+
+                // Assemble tile
+                element.appendChild(header);
+                element.appendChild(photo);
+                element.appendChild(name);
+                element.appendChild(interest);
 
                 const objectCSS =
                     new CSS3DObject(element);
