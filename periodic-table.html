@@ -135,27 +135,50 @@
             height: 210px;
             padding: 10px;
             box-sizing: border-box;
-            border-radius: 12px;
+            border-radius: 14px;
+
             display: flex;
             flex-direction: column;
             align-items: center;
+
             color: white;
             font-family: Arial, sans-serif;
+
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+
+            border: 2px solid;
             overflow: hidden;
+
+            transition: all 0.3s ease;
         }
 
+        /* Red - Below $100K */
         .person-card.red {
-            background: #d94a4a;
+            border-color: #ef3022;
+            box-shadow:
+                0 0 8px rgba(255, 77, 77, 0.5),
+                inset 0 0 8px rgba(255, 77, 77, 0.12);
         }
 
+        /* Orange - $100K to $200K */
         .person-card.orange {
-            background: #e99132;
+            border-color: #fdca35;
+            box-shadow:
+                0 0 8px rgba(255, 165, 0, 0.5),
+                inset 0 0 8px rgba(255, 165, 0, 0.12);
         }
 
+        /* Green - Above $200K */
         .person-card.green {
-            background: #16834b;
+            border-color: #3a9f48;
+            box-shadow:
+                0 0 8px rgba(0, 230, 118, 0.5),
+                inset 0 0 8px rgba(0, 230, 118, 0.12);
         }
 
+        /* Header */
         .card-header {
             width: 100%;
             display: flex;
@@ -164,6 +187,7 @@
             font-weight: bold;
         }
 
+        /* Photo */
         .card-photo {
             width: 105px;
             height: 105px;
@@ -172,6 +196,7 @@
             margin: 10px 0;
         }
 
+        /* Name */
         .card-name {
             font-size: 13px;
             font-weight: bold;
@@ -179,11 +204,14 @@
             width: 100%;
         }
 
+        /* Interest */
         .card-interest {
             font-size: 11px;
             margin-top: 5px;
             text-align: center;
+            opacity: 0.8;
         }
+
     </style>
 
     <script type="importmap">
