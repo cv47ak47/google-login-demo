@@ -698,16 +698,17 @@
 
             for (let i = 0; i < objects.length; i++) {
 
-                const theta = i * 0.175 + Math.PI;
+                const strand = i % 2;
+                const pairIndex = Math.floor(i / 2);
 
-                const y = -(i * 8) + 450;
+                const theta = pairIndex * 0.175 + Math.PI + strand * Math.PI;
 
-                const object = new THREE.Object3D();
+                const helixRadius = 900;
 
-                object.position.setFromCylindricalCoords(
-                    900,
-                    theta,
-                    y
+                object.position.set(
+                    helixRadius * Math.sin(theta),
+                    -(pairIndex * 8) + 450,
+                    helixRadius * Math.cos(theta)
                 );
 
                 vector.x = object.position.x * 2;
