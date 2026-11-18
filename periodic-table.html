@@ -301,7 +301,10 @@
                   'Loading Google Sheet...';
       
               const rows = await loadGoogleSheet(accessToken);
-      
+      console.log("First Google Sheet row:", rows[0]);
+console.log("Photo column:", rows[0]?.[0]);
+console.log("Name column:", rows[0]?.[1]);
+console.log("Interest column:", rows[0]?.[2]);
               const people = rows
                   .filter(row => row[0] || row[1] || row[2])
                   .map(row => ({
