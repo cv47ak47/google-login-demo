@@ -729,14 +729,15 @@
 
                 const object = new THREE.Object3D();
 
-                object.position.x =
-                    ((i % 5) * 400) - 800;
+                const x = i % 5;
+                const y = Math.floor(i / 5) % 4;
+                const z = Math.floor(i / 20);
 
-                object.position.y =
-                    (-(Math.floor(i / 5) % 5) * 400) + 800;
-
-                object.position.z =
-                    (Math.floor(i / 25) * 1000) - 2000;
+                object.position.set(
+                    (x - 2) * 200,
+                    (1.5 - y) * 250,
+                    (z - 4.5) * 200
+                );
 
                 targets.grid.push(object);
 
